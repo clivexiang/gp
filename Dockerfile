@@ -1,13 +1,18 @@
-FROM node:9.0
-MAINTAINER shudong <shudong.wang>
+FROM node:8.12-alpine as builder
 
-RUN mkdir -p /var/www/html
-WORKDIR /var/www/html
+WORKDIR /app
+COPY package.json /app/package.json
+RUN npm install 
 
-COPY package.json /var/www/html/
-# set taobao source package
-RUN npm config set registry https://registry.npm.taobao.org
-RUN npm install
-COPY . /var/www/html
-
+COPY . /app
 RUN npm run build
+
+FROM nginx:alpine
+
+COPY --from=builder /app/dist/* /usr/share/nginx/html/
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD nginx -g "daemon off;
